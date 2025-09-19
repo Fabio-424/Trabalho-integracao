@@ -1,8 +1,4 @@
-// --- Controles do HTML ---
-const caixaDeBusca = document.getElementById('caixaDeBusca');
-const botaoDeBusca = document.getElementById('botaoDeBusca');
-const divResultados = document.getElementById('resultados');
-const divFiltros = document.getElementById('filtros');
+console.log("Elemento do botão de busca encontrado:", botaoDeBusca);
 
 // --- Botões de Filtro ---
 const btnMenorPreco = document.getElementById('filtroMenorPreco');
@@ -22,6 +18,8 @@ btnLimparFiltros.addEventListener('click', () => aplicarFiltro('limpar'));
 
 
 async function realizarBusca() {
+    // Adicionamos o "espião" mais importante! Ele só aparece se o clique funcionar.
+    console.log("O botão de busca foi clicado! A função realizarBusca() começou.");
     const termo = caixaDeBusca.value.trim();
     if (termo === '') {
         alert('Por favor, digite algo para buscar.');
