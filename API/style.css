@@ -1,0 +1,28 @@
+/* Estilos para o container de filtros */
+.filtros-container {
+    margin-top: 20px;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    display: none; /* Começa escondido */
+    align-items: center;
+    gap: 10px; /* Espaçamento entre os itens */
+}
+
+.filtros-container span {
+    font-weight: bold;
+}
+
+.filtros-container button {
+    padding: 8px 12px;
+    font-size: 14px;
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.filtros-container button:hover {
+    background-color: #5a6268;
+}
