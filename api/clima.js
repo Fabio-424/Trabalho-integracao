@@ -14,7 +14,7 @@ export default async function handler(request, response) {
 
   try {
     // API Key gratuita do OpenWeatherMap (funciona sem cadastro para testes)
-    const apiKey = 'demo'; // Em produção, crie conta gratuita em openweathermap.org
+    const apiKey = 'a7316fab206ebe1f315ca75436b3579f'; // Em produção, crie conta gratuita em openweathermap.org
     const apiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(cidade)}&appid=${apiKey}&units=metric&lang=pt_br`;
     
     const apiResponse = await fetch(apiUrl);
