@@ -3,379 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clima & CEP</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        body {
-            background: linear-gradient(135deg, #6e8efb, #a777e3);
-            color: #333;
-            min-height: 100vh;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        
-        header {
-            text-align: center;
-            margin-bottom: 30px;
-            width: 100%;
-        }
-        
-        h1 {
-            color: white;
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-        }
-        
-        .subtitle {
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 1.2rem;
-        }
-        
-        .container {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 30px;
-            width: 100%;
-            max-width: 1200px;
-        }
-        
-        .card {
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-            padding: 25px;
-            width: 100%;
-            max-width: 400px;
-            transition: transform 0.3s ease;
-        }
-        
-        .card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .card h2 {
-            color: #4a4a4a;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #6e8efb;
-        }
-        
-        .input-group {
-            margin-bottom: 20px;
-        }
-        
-        input {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 16px;
-            transition: border-color 0.3s;
-        }
-        
-        input:focus {
-            border-color: #6e8efb;
-            outline: none;
-        }
-        
-        button {
-            background: linear-gradient(to right, #6e8efb, #a777e3);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            padding: 12px 20px;
-            font-size: 16px;
-            cursor: pointer;
-            width: 100%;
-            transition: all 0.3s ease;
-        }
-        
-        button:hover {
-            background: linear-gradient(to right, #5d7ce0, #9666d3);
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-        }
-        
-        .result {
-            margin-top: 25px;
-            padding: 20px;
-            background-color: #f8f9fa;
-            border-radius: 10px;
-            border-left: 4px solid #6e8efb;
-        }
-        
-        .result h3 {
-            color: #4a4a4a;
-            margin-bottom: 15px;
-        }
-        
-        .address-info, .weather-info {
-            line-height: 1.6;
-        }
-        
-        .weather-icon {
-            font-size: 3rem;
-            text-align: center;
-            margin: 15px 0;
-        }
-        
-        .error {
-            color: #e74c3c;
-            background-color: #fde8e6;
-            padding: 12px;
-            border-radius: 8px;
-            margin-top: 15px;
-            border-left: 4px solid #e74c3c;
-        }
-        
-        .loading {
-            display: none;
-            text-align: center;
-            margin-top: 15px;
-        }
-        
-        .spinner {
-            border: 4px solid rgba(0, 0, 0, 0.1);
-            border-left: 4px solid #6e8efb;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        footer {
-            margin-top: 40px;
-            color: white;
-            text-align: center;
-            font-size: 0.9rem;
-        }
-        
-        @media (max-width: 768px) {
-            .container {
-                flex-direction: column;
-                align-items: center;
-            }
-            
-            .card {
-                max-width: 100%;
-            }
-        }
-    </style>
+    <title>Clima & CEP - Consulta Integrada</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <header>
-        <h1>Clima & CEP</h1>
-        <p class="subtitle">Consulte endereços e previsão do tempo integrados</p>
-    </header>
-    
     <div class="container">
-        <div class="card">
-            <h2>Consulta de CEP</h2>
-            <div class="input-group">
-                <input type="text" id="cep-input" placeholder="Digite o CEP (ex: 45200-070)" value="45200-070">
-            </div>
-            <button id="buscar-cep">Buscar Endereço</button>
-            <div class="loading" id="loading-cep">
-                <div class="spinner"></div>
-                <p>Buscando endereço...</p>
-            </div>
-            <div class="result" id="address-result">
-                <h3>Endereço Encontrado</h3>
-                <div class="address-info">
-                    <p><strong>CEP:</strong> <span id="cep">45200-070</span></p>
-                    <p><strong>Logradouro:</strong> <span id="logradouro">Avenida Presidente João Goulart</span></p>
-                    <p><strong>Bairro:</strong> <span id="bairro">Centro</span></p>
-                    <p><strong>Cidade:</strong> <span id="cidade">Jequié</span></p>
-                    <p><strong>Estado:</strong> <span id="estado">BA</span></p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="card">
-            <h2>Consulta de Clima</h2>
-            <div class="input-group">
-                <input type="text" id="city-input" placeholder="Digite a cidade (ex: Jequié)" value="Jequié">
-            </div>
-            <button id="buscar-clima">Buscar Clima</button>
-            <div class="loading" id="loading-clima">
-                <div class="spinner"></div>
-                <p>Buscando informações meteorológicas...</p>
-            </div>
-            <div class="result" id="weather-result">
-                <h3>Clima em <span id="city-name">Jequié</span></h3>
-                <div class="weather-icon">☀️</div>
-                <div class="weather-info">
-                    <p><strong>Temperatura:</strong> <span id="temperature">28°C</span></p>
-                    <p><strong>Condição:</strong> <span id="condition">Ensolarado</span></p>
-                    <p><strong>Umidade:</strong> <span id="humidity">65%</span></p>
-                    <p><strong>Vento:</strong> <span id="wind">10 km/h</span></p>
-                </div>
-            </div>
-            <div id="weather-error" class="error" style="display: none;">
-                Erro ao buscar dados meteorológicos. Verifique o nome da cidade e tente novamente.
-            </div>
-        </div>
-    </div>
-    
-    <footer>
-        <p>Desenvolvido para consulta integrada de CEP e condições meteorológicas</p>
-    </footer>
+        <header>
+            <h1>🌤️ Clima & CEP</h1>
+            <p>Consulte endereços e previsão do tempo integrados</p>
+        </header>
 
-    <script>
-        // Elementos DOM
-        const cepInput = document.getElementById('cep-input');
-        const buscarCepBtn = document.getElementById('buscar-cep');
-        const loadingCep = document.getElementById('loading-cep');
-        const addressResult = document.getElementById('address-result');
-        
-        const cityInput = document.getElementById('city-input');
-        const buscarClimaBtn = document.getElementById('buscar-clima');
-        const loadingClima = document.getElementById('loading-clima');
-        const weatherResult = document.getElementById('weather-result');
-        const weatherError = document.getElementById('weather-error');
-        
-        // Função para buscar CEP
-        async function buscarCEP() {
-            const cep = cepInput.value.replace(/\D/g, '');
-            
-            if (cep.length !== 8) {
-                alert('Por favor, digite um CEP válido com 8 dígitos.');
-                return;
-            }
-            
-            loadingCep.style.display = 'block';
-            addressResult.style.display = 'none';
-            
-            try {
-                // Simulação de busca de CEP (substituir por API real)
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                
-                // Em uma implementação real, faríamos uma requisição para a API ViaCEP
-                // const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
-                // const data = await response.json();
-                
-                // Simulando resposta da API
-                const data = {
-                    cep: '45200-070',
-                    logradouro: 'Avenida Presidente João Goulart',
-                    bairro: 'Centro',
-                    localidade: 'Jequié',
-                    uf: 'BA'
-                };
-                
-                document.getElementById('cep').textContent = data.cep;
-                document.getElementById('logradouro').textContent = data.logradouro;
-                document.getElementById('bairro').textContent = data.bairro;
-                document.getElementById('cidade').textContent = data.localidade;
-                document.getElementById('estado').textContent = data.uf;
-                
-                addressResult.style.display = 'block';
-            } catch (error) {
-                console.error('Erro ao buscar CEP:', error);
-                alert('Erro ao buscar CEP. Tente novamente.');
-            } finally {
-                loadingCep.style.display = 'none';
-            }
-        }
-        
-        // Função para buscar clima
-        async function buscarClima() {
-            const city = cityInput.value.trim();
-            
-            if (!city) {
-                alert('Por favor, digite o nome de uma cidade.');
-                return;
-            }
-            
-            loadingClima.style.display = 'block';
-            weatherResult.style.display = 'none';
-            weatherError.style.display = 'none';
-            
-            try {
-                // Simulação de busca de clima (substituir por API real)
-                await new Promise(resolve => setTimeout(resolve, 1500));
-                
-                // Em uma implementação real, faríamos uma requisição para uma API de previsão do tempo
-                // Exemplo: OpenWeatherMap, WeatherAPI, ou Climatempo
-                // const response = await fetch(`https://api.weatherapi.com/v1/current.json?key=SUA_CHAVE&q=${city}&lang=pt`);
-                // const data = await response.json();
-                
-                // Simulando resposta da API
-                const data = {
-                    location: {
-                        name: city
-                    },
-                    current: {
-                        temp_c: 28,
-                        condition: {
-                            text: 'Ensolarado'
-                        },
-                        humidity: 65,
-                        wind_kph: 10
-                    }
-                };
-                
-                document.getElementById('city-name').textContent = data.location.name;
-                document.getElementById('temperature').textContent = `${data.current.temp_c}°C`;
-                document.getElementById('condition').textContent = data.current.condition.text;
-                document.getElementById('humidity').textContent = `${data.current.humidity}%`;
-                document.getElementById('wind').textContent = `${data.current.wind_kph} km/h`;
-                
-                // Alterar ícone conforme condição climática
-                const weatherIcon = document.querySelector('.weather-icon');
-                if (data.current.condition.text.toLowerCase().includes('sol')) {
-                    weatherIcon.textContent = '☀️';
-                } else if (data.current.condition.text.toLowerCase().includes('nuvem') || 
-                          data.current.condition.text.toLowerCase().includes('nublado')) {
-                    weatherIcon.textContent = '☁️';
-                } else if (data.current.condition.text.toLowerCase().includes('chuva')) {
-                    weatherIcon.textContent = '🌧️';
-                } else {
-                    weatherIcon.textContent = '🌤️';
-                }
-                
-                weatherResult.style.display = 'block';
-            } catch (error) {
-                console.error('Erro ao buscar clima:', error);
-                weatherError.style.display = 'block';
-            } finally {
-                loadingClima.style.display = 'none';
-            }
-        }
-        
-        // Event Listeners
-        buscarCepBtn.addEventListener('click', buscarCEP);
-        buscarClimaBtn.addEventListener('click', buscarClima);
-        
-        // Permitir busca com Enter
-        cepInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') buscarCEP();
-        });
-        
-        cityInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') buscarClima();
-        });
-        
-        // Inicialização
-        document.addEventListener('DOMContentLoaded', () => {
-            addressResult.style.display = 'block';
-            weatherResult.style.display = 'block';
-        });
-    </script>
+        <div class="consultas">
+            <div class="consulta-card">
+                <h2>📍 Consulta de CEP</h2>
+                <div class="input-group">
+                    <input type="text" id="inputCep" placeholder="Digite o CEP (ex: 01001000)" maxlength="9">
+                    <button id="btnCep">Buscar Endereço</button>
+                </div>
+                <div id="resultadoCep" class="resultado"></div>
+            </div>
+
+            <div class="consulta-card">
+                <h2>🌡️ Consulta de Clima</h2>
+                <div class="input-group">
+                    <input type="text" id="inputCidade" placeholder="Digite a cidade (ex: São Paulo)">
+                    <button id="btnClima">Buscar Clima</button>
+                </div>
+                <div id="resultadoClima" class="resultado"></div>
+            </div>
+        </div>
+
+        <div class="integracao">
+            <h2>🔄 Integração CEP + Clima</h2>
+            <p>Busque o CEP e depois o clima da cidade automaticamente!</p>
+            <button id="btnIntegrar">Buscar CEP e depois Clima</button>
+            <div id="resultadoIntegrado" class="resultado"></div>
+        </div>
+
+        <footer>
+            <p>Integração de APIs - ViaCEP & OpenWeatherMap © 2023</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
 </body>
 </html>
