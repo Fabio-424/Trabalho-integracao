@@ -17,11 +17,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const btnCondicaoNovo = document.getElementById('filtroCondicaoNovo');
     const btnLimparFiltros = document.getElementById('limparFiltros');
 
-    // Verificar se os elementos foram encontrados
-    console.log("Elemento do botão de busca encontrado:", botaoDeBusca);
-    console.log("Elemento da caixa de busca encontrado:", caixaDeBusca);
-    console.log("Elemento de resultados encontrado:", divResultados);
-
     // --- Event Listeners ---
     botaoDeBusca.addEventListener('click', realizarBusca);
     caixaDeBusca.addEventListener('keypress', function(e) {
@@ -37,7 +32,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- Funções ---
     async function realizarBusca() {
-        console.log("O botão de busca foi clicado! A função realizarBusca() começou.");
         const termo = caixaDeBusca.value.trim();
         
         if (termo === '') {
@@ -49,29 +43,46 @@ document.addEventListener('DOMContentLoaded', function() {
         divFiltros.style.display = 'none';
 
         try {
-            // URL CORRIGIDA - usando o endpoint correto da Vercel
-            const response = await fetch(`/api/buscar?termo=${encodeURIComponent(termo)}`);
+            // URL da API - IMPORTANTE: a pasta deve se chamar "api" (minúsculo)
+            const apiUrl = `/api/buscar?termo=${encodeURIComponent(termo)}`;
+            console.log("Tentando acessar:", apiUrl);
+            
+            const response = await fetch(apiUrl);
             
             console.log("Status da resposta:", response.status);
+            console.log("URL completa:", window.location.origin + apiUrl);
             
             if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.error || `Erro HTTP: ${response.status}`);
+                let errorMessage = `Erro HTTP: ${response.status}`;
+                try {
+                    const errorData = await response.json();
+                    errorMessage = errorData.error || errorMessage;
+                } catch (e) {
+                    // Não foi possível ler JSON de erro
+                }
+                throw new Error(errorMessage);
             }
             
             const resultados = await response.json();
-            console.log("Resultados recebidos:", resultados.length);
+            console.log("Resultados recebidos:", resultados);
             
             resultadosOriginais = resultados;
             exibirResultados(resultadosOriginais);
             divFiltros.style.display = 'flex';
 
         } catch (error) {
-            console.error('Falha na busca:', error);
+            console.error('Falha completa na busca:', error);
             divResultados.innerHTML = `
-                <p class="erro">Erro na busca: ${error.message}</p>
-                <p class="erro">Verifique se a API está funcionando no Vercel.</p>
-                <p class="erro">URL tentada: /api/buscar?termo=${encodeURIComponent(termo)}</p>
+                <div class="erro">
+                    <p><strong>Erro na busca:</strong> ${error.message}</p>
+                    <p>Verifique:</p>
+                    <ul>
+                        <li>Se a pasta da API se chama "api" (minúsculo)</li>
+                        <li>Se o arquivo dentro se chama "buscar.js"</li>
+                        <li>Se o deploy na Vercel foi bem-sucedido</li>
+                    </ul>
+                    <p>Abra o console do navegador (F12) para mais detalhes.</p>
+                </div>
             `;
         }
     }
@@ -108,7 +119,6 @@ document.addEventListener('DOMContentLoaded', function() {
             cardProduto.href = produto.link;
             cardProduto.target = '_blank';
             cardProduto.className = 'card-produto';
-            cardProduto.style.textDecoration = 'none';
 
             cardProduto.innerHTML = `
                 <img src="${produto.imagem}" alt="${produto.nome}" class="imagem-produto">
