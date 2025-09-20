@@ -39,64 +39,47 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        divResultados.innerHTML = '<p>Buscando, aguarde...</p>';
+        mostrarLoading();
         divFiltros.style.display = 'none';
 
         try {
             const apiUrl = `/api/buscar?termo=${encodeURIComponent(termo)}`;
-            console.log("Tentando acessar:", apiUrl);
+            console.log("Buscando:", apiUrl);
             
             const response = await fetch(apiUrl);
             
-            console.log("Status da resposta:", response.status);
+            console.log("Status:", response.status);
             
             if (!response.ok) {
-                throw new Error(`Erro HTTP: ${response.status}`);
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || `Erro: ${response.status}`);
             }
             
             const resultados = await response.json();
-            console.log("Resultados recebidos:", resultados);
+            console.log("Resultados reais recebidos:", resultados);
+            
+            if (resultados.error) {
+                throw new Error(resultados.error);
+            }
             
             resultadosOriginais = resultados;
             exibirResultados(resultadosOriginais);
             divFiltros.style.display = 'flex';
 
         } catch (error) {
-            console.error('Falha na busca:', error);
+            console.error('Erro na busca:', error);
             
-            // Fallback: dados mockados para demonstração
-            const dadosMockados = [
-              {
-                nome: `Notebook ${termo} Intel Core i5 8GB RAM SSD 256GB`,
-                preco: 1899.99,
-                imagem: "https://via.placeholder.com/150?text=Notebook+Exemplo",
-                link: "https://www.mercadolivre.com.br",
-                condicao: "Novo"
-              },
-              {
-                nome: `Computador ${termo} Intel i5 8GB RAM`,
-                preco: 1599.50,
-                imagem: "https://via.placeholder.com/150?text=Computador+Exemplo",
-                link: "https://www.mercadolivre.com.br",
-                condicao: "Novo"
-              },
-              {
-                nome: `PC Gamer ${termo} AMD Ryzen 5 16GB RAM`,
-                preco: 2599.99,
-                imagem: "https://via.placeholder.com/150?text=PC+Gamer+Exemplo",
-                link: "https://www.mercadolivre.com.br",
-                condicao: "Novo"
-              }
-            ];
-            
-            resultadosOriginais = dadosMockados;
-            exibirResultados(resultadosOriginais);
-            divFiltros.style.display = 'flex';
-            
-            divResultados.innerHTML += `
-                <div class="aviso">
-                    <p><strong>Atenção:</strong> Usando dados de demonstração. A API do Mercado Livre retornou erro.</p>
-                    <p>Detalhes do erro: ${error.message}</p>
+            divResultados.innerHTML = `
+                <div class="erro">
+                    <p><strong>Erro na busca:</strong> ${error.message}</p>
+                    <p>Não foi possível conectar à API do Mercado Livre.</p>
+                    <p>Tente novamente ou verifique:</p>
+                    <ul>
+                        <li>Sua conexão com a internet</li>
+                        <li>Se a API do Mercado Livre está funcionando</li>
+                        <li>O console do navegador para mais detalhes (F12)</li>
+                    </ul>
+                    <p>Termo buscado: <strong>${termo}</strong></p>
                 </div>
             `;
         }
@@ -125,7 +108,7 @@ document.addEventListener('DOMContentLoaded', function() {
         divResultados.innerHTML = '';
 
         if (resultados.length === 0) {
-            divResultados.innerHTML = '<p>Nenhum resultado encontrado.</p>';
+            divResultados.innerHTML = '<p>Nenhum resultado encontrado para sua busca.</p>';
             return;
         }
 
@@ -134,19 +117,27 @@ document.addEventListener('DOMContentLoaded', function() {
             cardProduto.href = produto.link;
             cardProduto.target = '_blank';
             cardProduto.className = 'card-produto';
+            cardProduto.rel = 'noopener noreferrer'; // Segurança
 
             cardProduto.innerHTML = `
-                <img src="${produto.imagem}" alt="${produto.nome}" class="imagem-produto">
+                <img src="${produto.imagem}" alt="${produto.nome}" class="imagem-produto"
+                     onerror="this.src='https://via.placeholder.com/300x200/2d3277/ffffff?text=Imagem+Não+Disponível'">
                 <div class="info-produto">
                     <h3>${produto.nome}</h3>
                     <p class="preco-produto">R$ ${produto.preco.toFixed(2)}</p>
                     <p class="condicao-produto">Condição: <strong>${produto.condicao}</strong></p>
-                    <p class="fonte-produto">Vendido no Mercado Livre</p>
+                    <p class="vendedor-produto">Vendedor: ${produto.seller || 'Mercado Livre'}</p>
+                    <p class="vendidos-produto">${produto.vendidos} vendidos</p>
+                    <p class="fonte-produto">Clique para ver no Mercado Livre</p>
                 </div>
             `;
             divResultados.appendChild(cardProduto);
         });
     }
 
-    console.log("Inicialização concluída. A página está pronta.");
+    function mostrarLoading() {
+        divResultados.innerHTML = '<div class="loading">Buscando produtos no Mercado Livre...</div>';
+    }
+
+    console.log("Sistema pronto para buscar qualquer produto!");
 });

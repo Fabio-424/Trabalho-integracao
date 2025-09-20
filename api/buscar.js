@@ -23,77 +23,69 @@ export default async function handler(request, response) {
   const apiUrl = `https://api.mercadolibre.com/sites/MLB/search?q=${encodeURIComponent(termo)}&limit=20`;
 
   try {
-    // Faz a chamada para a API do Mercado Livre com headers
+    // Faz a chamada para a API do Mercado Livre
+    console.log("Acessando API do Mercado Livre:", apiUrl);
+    
     const apiResponse = await fetch(apiUrl, {
       headers: {
-        'User-Agent': 'ComparadorPrecos/1.0 (https://trabalho-integracao.vercel.app)',
+        'User-Agent': 'ComparadorPrecos/1.0',
         'Accept': 'application/json',
       }
     });
     
-    console.log("Status da API Mercado Livre:", apiResponse.status);
-    console.log("Headers da API:", Object.fromEntries(apiResponse.headers.entries()));
+    console.log("Status da API:", apiResponse.status);
     
     if (!apiResponse.ok) {
-      // Tenta ler a resposta de erro
-      let errorText = await apiResponse.text();
-      console.error("Resposta de erro da API:", errorText);
+      // Se der erro 401 ou outros, vamos tentar uma abordagem diferente
+      console.log("Tentando abordagem alternativa sem headers...");
       
-      throw new Error(`Erro na API do Mercado Livre: ${apiResponse.status} - ${errorText}`);
+      // Tentamos novamente sem headers específicos
+      const apiResponse2 = await fetch(apiUrl);
+      if (!apiResponse2.ok) {
+        throw new Error(`Erro na API: ${apiResponse2.status} ${apiResponse2.statusText}`);
+      }
+      
+      const data = await apiResponse2.json();
+      return processarDados(response, data, termo);
     }
     
     const data = await apiResponse.json();
-    console.log(`Encontrados ${data.results ? data.results.length : 0} produtos`);
-
-    // Verifica se temos resultados
-    if (!data.results || !Array.isArray(data.results)) {
-      throw new Error('Formato de resposta inesperado da API');
-    }
-
-    // Formata os dados
-    const produtosFormatados = data.results.map(item => ({
-      nome: item.title,
-      preco: item.price,
-      imagem: item.thumbnail ? item.thumbnail.replace('http://', 'https://') : '',
-      link: item.permalink,
-      condicao: item.condition === 'new' ? 'Novo' : 'Usado',
-    }));
-
-    // Retorna os dados
-    response.status(200).json(produtosFormatados);
+    return processarDados(response, data, termo);
 
   } catch (error) {
-    console.error('Erro completo no servidor:', error);
+    console.error('Erro completo:', error);
     
-    // Fallback: dados mockados para demonstração
-    const dadosMockados = [
-      {
-        nome: "Notebook Intel Core i5 8GB RAM SSD 256GB",
-        preco: 1899.99,
-        imagem: "https://via.placeholder.com/150?text=Notebook+Exemplo",
-        link: "https://www.mercadolivre.com.br",
-        condicao: "Novo"
-      },
-      {
-        nome: "Computador Completo Intel i5 8GB RAM",
-        preco: 1599.50,
-        imagem: "https://via.placeholder.com/150?text=Computador+Exemplo",
-        link: "https://www.mercadolivre.com.br",
-        condicao: "Novo"
-      },
-      {
-        nome: "PC Gamer AMD Ryzen 5 16GB RAM Placa de Vídeo",
-        preco: 2599.99,
-        imagem: "https://via.placeholder.com/150?text=PC+Gamer+Exemplo",
-        link: "https://www.mercadolivre.com.br",
-        condicao: "Novo"
-      }
-    ];
-    
-    // Retorna dados mockados em caso de erro (para o trabalho funcionar)
-    response.status(200).json(dadosMockados);
-    
-    // Se quiser retornar erro mesmo, descomente a linha abaixo e comente a acima:
-    // response.status(500).json({ error: 'Falha ao buscar dados: ' + error.message });
+    // Em caso de erro, mostramos uma mensagem mas não usamos dados mockados
+    response.status(500).json({ 
+      error: 'Falha ao buscar dados da API do Mercado Livre',
+      detalhes: error.message,
+      termo: termo
+    });
   }
+}
+
+// Função separada para processar os dados
+function processarDados(response, data, termo) {
+  // Verifica se temos resultados
+  if (!data.results || !Array.isArray(data.results)) {
+    throw new Error('Formato de resposta inesperado da API');
+  }
+
+  console.log(`Encontrados ${data.results.length} produtos para "${termo}"`);
+
+  // Formata os dados
+  const produtosFormatados = data.results.map(item => ({
+    id: item.id,
+    nome: item.title,
+    preco: item.price,
+    imagem: item.thumbnail ? item.thumbnail.replace('http://', 'https://') : 
+            `https://via.placeholder.com/300x200/2d3277/ffffff?text=${encodeURIComponent(item.title.substring(0, 15))}`,
+    link: item.permalink,
+    condicao: item.condition === 'new' ? 'Novo' : 'Usado',
+    vendidos: item.sold_quantity || 0,
+    seller: item.seller.nickname
+  }));
+
+  // Retorna os dados reais da API
+  response.status(200).json(produtosFormatados);
 }

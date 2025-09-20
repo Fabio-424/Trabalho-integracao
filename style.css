@@ -344,3 +344,14 @@ footer {
         font-size: 20px;
     }
 }
+
+.vendedor-produto, .vendidos-produto {
+    font-size: 13px;
+    color: #6c757d;
+    margin-bottom: 5px;
+}
+
+.vendidos-produto {
+    color: #28a745;
+    font-weight: 500;
+}
