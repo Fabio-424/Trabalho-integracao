@@ -46,26 +46,32 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         divResultados.innerHTML = '<p>Buscando, aguarde...</p>';
-        divFiltros.style.display = 'none'; // Esconde os filtros durante a busca
+        divFiltros.style.display = 'none';
 
         try {
-            // Chamamos nossa API no Vercel
+            // URL CORRIGIDA - usando o endpoint correto da Vercel
             const response = await fetch(`/api/buscar?termo=${encodeURIComponent(termo)}`);
             
+            console.log("Status da resposta:", response.status);
+            
             if (!response.ok) {
-                throw new Error(`Erro HTTP: ${response.status}`);
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || `Erro HTTP: ${response.status}`);
             }
             
             const resultados = await response.json();
-            resultadosOriginais = resultados; // Guarda os resultados sem filtro
+            console.log("Resultados recebidos:", resultados.length);
+            
+            resultadosOriginais = resultados;
             exibirResultados(resultadosOriginais);
-            divFiltros.style.display = 'flex'; // Mostra os filtros após a busca
+            divFiltros.style.display = 'flex';
 
         } catch (error) {
             console.error('Falha na busca:', error);
             divResultados.innerHTML = `
                 <p class="erro">Erro na busca: ${error.message}</p>
                 <p class="erro">Verifique se a API está funcionando no Vercel.</p>
+                <p class="erro">URL tentada: /api/buscar?termo=${encodeURIComponent(termo)}</p>
             `;
         }
     }
@@ -90,7 +96,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function exibirResultados(resultados) {
-        divResultados.innerHTML = ''; // Limpa a tela
+        divResultados.innerHTML = '';
 
         if (resultados.length === 0) {
             divResultados.innerHTML = '<p>Nenhum resultado encontrado.</p>';
