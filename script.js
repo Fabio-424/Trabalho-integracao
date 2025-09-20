@@ -133,6 +133,37 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
             divResultados.appendChild(cardProduto);
         });
+        // No final da função exibirResultados, adicione:
+function exibirResultados(resultados, ehExemplo = false) {
+    divResultados.innerHTML = '';
+
+    if (resultados.length === 0) {
+        divResultados.innerHTML = '<p>Nenhum resultado encontrado para sua busca.</p>';
+        return;
+    }
+
+    resultados.forEach(produto => {
+        // ... código existente ...
+    });
+
+    // Adicione esta mensagem se forem dados de exemplo
+    if (ehExemplo) {
+        const aviso = document.createElement('div');
+        aviso.className = 'aviso';
+        aviso.innerHTML = `
+            <p>⚠️ <strong>Modo de demonstração:</strong> Mostrando dados de exemplo.</p>
+            <p>A API do Mercado Livre está com restrições de acesso.</p>
+        `;
+        divResultados.appendChild(aviso);
+    }
+}
+
+// E modifique a chamada em realizarBusca:
+// Substitua:
+exibirResultados(resultadosOriginais);
+
+// Por:
+exibirResultados(resultadosOriginais, false);
     }
 
     function mostrarLoading() {
