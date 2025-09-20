@@ -43,24 +43,15 @@ document.addEventListener('DOMContentLoaded', function() {
         divFiltros.style.display = 'none';
 
         try {
-            // URL da API - IMPORTANTE: a pasta deve se chamar "api" (minúsculo)
             const apiUrl = `/api/buscar?termo=${encodeURIComponent(termo)}`;
             console.log("Tentando acessar:", apiUrl);
             
             const response = await fetch(apiUrl);
             
             console.log("Status da resposta:", response.status);
-            console.log("URL completa:", window.location.origin + apiUrl);
             
             if (!response.ok) {
-                let errorMessage = `Erro HTTP: ${response.status}`;
-                try {
-                    const errorData = await response.json();
-                    errorMessage = errorData.error || errorMessage;
-                } catch (e) {
-                    // Não foi possível ler JSON de erro
-                }
-                throw new Error(errorMessage);
+                throw new Error(`Erro HTTP: ${response.status}`);
             }
             
             const resultados = await response.json();
@@ -71,17 +62,41 @@ document.addEventListener('DOMContentLoaded', function() {
             divFiltros.style.display = 'flex';
 
         } catch (error) {
-            console.error('Falha completa na busca:', error);
-            divResultados.innerHTML = `
-                <div class="erro">
-                    <p><strong>Erro na busca:</strong> ${error.message}</p>
-                    <p>Verifique:</p>
-                    <ul>
-                        <li>Se a pasta da API se chama "api" (minúsculo)</li>
-                        <li>Se o arquivo dentro se chama "buscar.js"</li>
-                        <li>Se o deploy na Vercel foi bem-sucedido</li>
-                    </ul>
-                    <p>Abra o console do navegador (F12) para mais detalhes.</p>
+            console.error('Falha na busca:', error);
+            
+            // Fallback: dados mockados para demonstração
+            const dadosMockados = [
+              {
+                nome: `Notebook ${termo} Intel Core i5 8GB RAM SSD 256GB`,
+                preco: 1899.99,
+                imagem: "https://via.placeholder.com/150?text=Notebook+Exemplo",
+                link: "https://www.mercadolivre.com.br",
+                condicao: "Novo"
+              },
+              {
+                nome: `Computador ${termo} Intel i5 8GB RAM`,
+                preco: 1599.50,
+                imagem: "https://via.placeholder.com/150?text=Computador+Exemplo",
+                link: "https://www.mercadolivre.com.br",
+                condicao: "Novo"
+              },
+              {
+                nome: `PC Gamer ${termo} AMD Ryzen 5 16GB RAM`,
+                preco: 2599.99,
+                imagem: "https://via.placeholder.com/150?text=PC+Gamer+Exemplo",
+                link: "https://www.mercadolivre.com.br",
+                condicao: "Novo"
+              }
+            ];
+            
+            resultadosOriginais = dadosMockados;
+            exibirResultados(resultadosOriginais);
+            divFiltros.style.display = 'flex';
+            
+            divResultados.innerHTML += `
+                <div class="aviso">
+                    <p><strong>Atenção:</strong> Usando dados de demonstração. A API do Mercado Livre retornou erro.</p>
+                    <p>Detalhes do erro: ${error.message}</p>
                 </div>
             `;
         }
