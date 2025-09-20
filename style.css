@@ -484,3 +484,20 @@ footer {
     50% { opacity: 0.5; }
     100% { opacity: 1; }
 }
+
+.fallback-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    padding: 20px;
+    text-align: center;
+}
+
+.fallback-link:hover {
+    background-color: #f8f9fa;
+}
+
+.card-produto.fallback {
+    text-align: center;
+    grid-column: 1 / -1;
+}

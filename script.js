@@ -44,52 +44,39 @@ document.addEventListener('DOMContentLoaded', function() {
 
         try {
             const apiUrl = `/api/buscar?termo=${encodeURIComponent(termo)}`;
-            console.log("Tentando acessar:", apiUrl);
+            console.log("Tentando acessar API:", apiUrl);
             
             const response = await fetch(apiUrl);
             
             console.log("Status da resposta:", response.status);
             
             if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.error || `Erro HTTP: ${response.status}`);
+                throw new Error(`Erro HTTP: ${response.status}`);
             }
             
             const resultados = await response.json();
-            console.log("Resultados recebidos:", resultados);
+            console.log("Resultados recebidos da API:", resultados);
             
-            if (resultados.error) {
-                throw new Error(resultados.error);
+            // USAR APENAS OS LINKS QUE VÊM DA API
+            resultadosOriginais = resultados;
+            
+            if (resultados.length === 1 && resultados[0].isFallback) {
+                // Modo fallback - apenas um resultado com link de busca
+                exibirResultadoFallback(resultados[0]);
+            } else {
+                // Resultados normais da API
+                exibirResultados(resultados);
+                divFiltros.style.display = 'flex';
             }
-            
-            // Garantir que os links sejam válidos
-            const resultadosComLinksValidos = resultados.map(produto => {
-                return {
-                    ...produto,
-                    link: produto.link && produto.link.includes('mercadolivre') 
-                        ? produto.link 
-                        : `https://www.mercadolivre.com.br/${produto.id}`
-                };
-            });
-            
-            resultadosOriginais = resultadosComLinksValidos;
-            exibirResultados(resultadosOriginais, false);
-            divFiltros.style.display = 'flex';
 
         } catch (error) {
-            console.error('Falha na busca:', error);
+            console.error('Falha completa na busca:', error);
             
-            // Fallback: dados mockados com links de busca reais
-            const dadosMockados = criarDadosMockados(termo);
-            
-            resultadosOriginais = dadosMockados;
-            exibirResultados(resultadosOriginais, true);
-            divFiltros.style.display = 'flex';
-            
-            divResultados.innerHTML += `
-                <div class="aviso">
-                    <p><strong>Atenção:</strong> Usando dados de demonstração. A API do Mercado Livre retornou erro.</p>
-                    <p>Detalhes do erro: ${error.message}</p>
+            divResultados.innerHTML = `
+                <div class="erro">
+                    <p><strong>Erro na conexão:</strong> ${error.message}</p>
+                    <p>Não foi possível conectar ao servidor de busca.</p>
+                    <p>Tente novamente em alguns instantes.</p>
                 </div>
             `;
         }
@@ -111,10 +98,10 @@ document.addEventListener('DOMContentLoaded', function() {
             resultadosFiltrados = [...resultadosOriginais];
         }
 
-        exibirResultados(resultadosFiltrados, false);
+        exibirResultados(resultadosFiltrados);
     }
 
-    function exibirResultados(resultados, ehExemplo = false) {
+    function exibirResultados(resultados) {
         divResultados.innerHTML = '';
 
         if (resultados.length === 0) {
@@ -123,6 +110,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         resultados.forEach(produto => {
+            // SÓ EXIBE SE TIVER LINK VÁLIDO
+            if (!produto.link || !produto.link.includes('mercadolivre')) {
+                console.log('Produto sem link válido:', produto);
+                return;
+            }
+
             const cardProduto = document.createElement('a');
             cardProduto.href = produto.link;
             cardProduto.target = '_blank';
@@ -131,119 +124,43 @@ document.addEventListener('DOMContentLoaded', function() {
 
             cardProduto.innerHTML = `
                 <img src="${produto.imagem}" alt="${produto.nome}" class="imagem-produto"
-                     onerror="this.src='https://via.placeholder.com/300x200/2d3277/ffffff?text=Imagem+Não+Disponível'">
+                     onerror="this.src='https://via.placeholder.com/300x200/2d3277/ffffff?text=Imagem'">
                 <div class="info-produto">
                     <h3>${produto.nome}</h3>
-                    <p class="preco-produto">R$ ${produto.preco.toFixed(2)}</p>
+                    ${produto.preco > 0 ? `<p class="preco-produto">R$ ${produto.preco.toFixed(2)}</p>` : ''}
                     <div class="detalhes-produto">
                         <span class="condicao-produto">${produto.condicao}</span>
-                        <span class="vendidos-produto">${produto.vendidos || 0} vendidos</span>
-                        ${produto.estrelas ? `<span class="avaliacao-produto">⭐ ${produto.estrelas}</span>` : ''}
+                        ${produto.vendidos > 0 ? `<span class="vendidos-produto">${produto.vendidos} vendidos</span>` : ''}
                     </div>
-                    <p class="vendedor-produto">${produto.seller || 'Vendedor Mercado Livre'}</p>
+                    <p class="vendedor-produto">${produto.seller}</p>
                     ${produto.local ? `<p class="local-produto">${produto.local}</p>` : ''}
-                    <p class="fonte-produto">Clique para ver no Mercado Livre</p>
+                    <p class="fonte-produto">Ver no Mercado Livre →</p>
                 </div>
             `;
             divResultados.appendChild(cardProduto);
         });
+    }
 
-        if (ehExemplo) {
-            const aviso = document.createElement('div');
-            aviso.className = 'aviso';
-            aviso.innerHTML = `
-                <p>🔍 <strong>Modo de demonstração:</strong> Mostrando dados simulados.</p>
-                <p>A API do Mercado Livre está com restrições de acesso temporárias.</p>
-                <p>Os links apontam para buscas reais no Mercado Livre.</p>
-            `;
-            divResultados.appendChild(aviso);
-        }
+    function exibirResultadoFallback(produtoFallback) {
+        divResultados.innerHTML = `
+            <div class="aviso">
+                <p>🔍 <strong>Redirecionamento para busca:</strong></p>
+                <p>A API direta não está respondendo, mas você pode buscar diretamente no Mercado Livre.</p>
+            </div>
+            <div class="card-produto fallback">
+                <a href="${produtoFallback.link}" target="_blank" class="fallback-link">
+                    <div class="info-produto">
+                        <h3>${produtoFallback.nome}</h3>
+                        <p class="fonte-produto">Clique aqui para ver os resultados reais no Mercado Livre</p>
+                    </div>
+                </a>
+            </div>
+        `;
     }
 
     function mostrarLoading() {
         divResultados.innerHTML = '<div class="loading">Buscando produtos no Mercado Livre...</div>';
     }
 
-    function criarDadosMockados(termo) {
-        console.log("Criando dados mockados para:", termo);
-        
-        const categorias = {
-            'celular': [
-                'Samsung Galaxy S23 256GB',
-                'iPhone 15 Pro 128GB',
-                'Xiaomi Redmi Note 12',
-                'Motorola Edge 40',
-                'Google Pixel 7'
-            ],
-            'notebook': [
-                'Dell Inspiron i7 16GB RAM',
-                'MacBook Air M2 2023',
-                'Acer Nitro 5 Gamer',
-                'Lenovo Ideapad 3i',
-                'HP Pavilion 15'
-            ],
-            'tv': [
-                'Smart TV LG 55" 4K',
-                'Samsung 50" Crystal UHD',
-                'TV TCL 43" 4K Android',
-                'Philips 65" Ambilight',
-                'AOC 32" Smart TV'
-            ],
-            'fone': [
-                'Fone Bluetooth Sony WH-1000XM5',
-                'AirPods Pro 2ª Geração',
-                'JBL Tune 710BT',
-                'Fone Samsung Galaxy Buds2',
-                'Fone Philips com Cancelamento de Ruído'
-            ],
-            'default': [
-                'Produto Premium',
-                'Modelo Avançado',
-                'Edição Especial',
-                'Kit Completo',
-                'Versão Plus'
-            ]
-        };
-
-        // Escolhe a categoria baseada no termo
-        let produtosDaCategoria = categorias.default;
-        for (const [key, value] of Object.entries(categorias)) {
-            if (termo.toLowerCase().includes(key)) {
-                produtosDaCategoria = value;
-                break;
-            }
-        }
-
-        const vendedores = [
-            'Loja Oficial', 'Tech Store', 'Eletro Mundo', 'Super Discount', 
-            'Mega Shop', 'Digital Store', 'Premium Tech', 'Best Buy Eletrônicos'
-        ];
-
-        const cidades = ['São Paulo, SP', 'Rio de Janeiro, RJ', 'Belo Horizonte, MG', 
-                        'Porto Alegre, RS', 'Brasília, DF', 'Salvador, BA'];
-
-        // Link de busca real no Mercado Livre
-        const linkBuscaReal = `https://www.mercadolivre.com.br/${termo.replace(/\s+/g, '-')}`;
-
-        return produtosDaCategoria.map((nomeProduto, index) => {
-            const precoBase = 500 + (index * 300);
-            const precoVariacao = Math.floor(Math.random() * 400);
-            const vendidos = 50 + Math.floor(Math.random() * 200);
-            
-            return {
-                id: `MLB${Math.floor(1000000000 + Math.random() * 9000000000)}`,
-                nome: `${termo} ${nomeProduto}`,
-                preco: precoBase + precoVariacao,
-                imagem: `https://via.placeholder.com/300x200/2d3277/ffffff?text=${encodeURIComponent(nomeProduto.split(' ')[0])}`,
-                link: linkBuscaReal, // Usando link de busca real
-                condicao: Math.random() > 0.3 ? 'Novo' : 'Usado',
-                vendidos: vendidos,
-                seller: vendedores[Math.floor(Math.random() * vendedores.length)],
-                local: cidades[Math.floor(Math.random() * cidades.length)],
-                estrelas: (4 + Math.random()).toFixed(1)
-            };
-        });
-    }
-
-    console.log("Inicialização concluída. A página está pronta.");
+    console.log("Inicialização concluída. O sistema usará apenas links da API.");
 });
