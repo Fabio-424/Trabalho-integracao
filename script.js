@@ -44,41 +44,38 @@ document.addEventListener('DOMContentLoaded', function() {
 
         try {
             const apiUrl = `/api/buscar?termo=${encodeURIComponent(termo)}`;
-            console.log("Tentando acessar API:", apiUrl);
+            console.log("Buscando:", apiUrl);
             
             const response = await fetch(apiUrl);
+            const data = await response.json();
             
-            console.log("Status da resposta:", response.status);
-            
+            console.log("Resposta da API:", data);
+
             if (!response.ok) {
-                throw new Error(`Erro HTTP: ${response.status}`);
+                throw new Error(`Erro ${response.status}: ${response.statusText}`);
             }
-            
-            const resultados = await response.json();
-            console.log("Resultados recebidos da API:", resultados);
-            
-            // USAR APENAS OS LINKS QUE VÊM DA API
-            resultadosOriginais = resultados;
-            
-            if (resultados.length === 1 && resultados[0].isFallback) {
-                // Modo fallback - apenas um resultado com link de busca
-                exibirResultadoFallback(resultados[0]);
-            } else {
-                // Resultados normais da API
-                exibirResultados(resultados);
+
+            if (data.success) {
+                // API funcionou - mostrar resultados
+                resultadosOriginais = data.resultados;
+                exibirResultados(resultadosOriginais);
                 divFiltros.style.display = 'flex';
+                
+                // Mostrar estatísticas
+                divResultados.innerHTML += `
+                    <div class="sucesso">
+                        <p>✅ Encontrados ${data.total} resultados para "${termo}"</p>
+                    </div>
+                `;
+                
+            } else {
+                // API não está disponível
+                exibirErroAPI(data, termo);
             }
 
         } catch (error) {
-            console.error('Falha completa na busca:', error);
-            
-            divResultados.innerHTML = `
-                <div class="erro">
-                    <p><strong>Erro na conexão:</strong> ${error.message}</p>
-                    <p>Não foi possível conectar ao servidor de busca.</p>
-                    <p>Tente novamente em alguns instantes.</p>
-                </div>
-            `;
+            console.error('Erro completo:', error);
+            exibirErroConexao(error, termo);
         }
     }
 
@@ -110,12 +107,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         resultados.forEach(produto => {
-            // SÓ EXIBE SE TIVER LINK VÁLIDO
-            if (!produto.link || !produto.link.includes('mercadolivre')) {
-                console.log('Produto sem link válido:', produto);
-                return;
-            }
-
             const cardProduto = document.createElement('a');
             cardProduto.href = produto.link;
             cardProduto.target = '_blank';
@@ -127,13 +118,14 @@ document.addEventListener('DOMContentLoaded', function() {
                      onerror="this.src='https://via.placeholder.com/300x200/2d3277/ffffff?text=Imagem'">
                 <div class="info-produto">
                     <h3>${produto.nome}</h3>
-                    ${produto.preco > 0 ? `<p class="preco-produto">R$ ${produto.preco.toFixed(2)}</p>` : ''}
+                    <p class="preco-produto">R$ ${produto.preco.toFixed(2)}</p>
                     <div class="detalhes-produto">
                         <span class="condicao-produto">${produto.condicao}</span>
                         ${produto.vendidos > 0 ? `<span class="vendidos-produto">${produto.vendidos} vendidos</span>` : ''}
+                        ${produto.shipping ? `<span class="frete-gratis">🚚 Frete Grátis</span>` : ''}
                     </div>
                     <p class="vendedor-produto">${produto.seller}</p>
-                    ${produto.local ? `<p class="local-produto">${produto.local}</p>` : ''}
+                    ${produto.local ? `<p class="local-produto">📍 ${produto.local}</p>` : ''}
                     <p class="fonte-produto">Ver no Mercado Livre →</p>
                 </div>
             `;
@@ -141,26 +133,55 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function exibirResultadoFallback(produtoFallback) {
+    function exibirErroAPI(data, termo) {
         divResultados.innerHTML = `
-            <div class="aviso">
-                <p>🔍 <strong>Redirecionamento para busca:</strong></p>
-                <p>A API direta não está respondendo, mas você pode buscar diretamente no Mercado Livre.</p>
+            <div class="erro">
+                <h3>⚠️ API Indisponível no Momento</h3>
+                <p>A conexão com o Mercado Livre está temporariamente indisponível.</p>
+                <p><strong>Detalhes técnicos:</strong> ${data.error || 'Erro desconhecido'}</p>
+                
+                <div class="solucao">
+                    <h4>📋 Soluções:</h4>
+                    <ul>
+                        <li>Tente novamente em alguns minutos</li>
+                        <li>Verifique sua conexão com a internet</li>
+                        <li>Busque diretamente no <a href="${data.searchUrl || 'https://www.mercadolivre.com.br'}" target="_blank">Mercado Livre</a></li>
+                    </ul>
+                </div>
+                
+                <p class="timestamp">⌚ ${new Date().toLocaleString()}</p>
             </div>
-            <div class="card-produto fallback">
-                <a href="${produtoFallback.link}" target="_blank" class="fallback-link">
-                    <div class="info-produto">
-                        <h3>${produtoFallback.nome}</h3>
-                        <p class="fonte-produto">Clique aqui para ver os resultados reais no Mercado Livre</p>
-                    </div>
-                </a>
+        `;
+    }
+
+    function exibirErroConexao(error, termo) {
+        divResultados.innerHTML = `
+            <div class="erro">
+                <h3>❌ Erro de Conexão</h3>
+                <p>Não foi possível conectar ao servidor de busca.</p>
+                <p><strong>Erro:</strong> ${error.message}</p>
+                
+                <div class="solucao">
+                    <h4>🚀 Alternativas:</h4>
+                    <ul>
+                        <li>Busque diretamente no <a href="https://lista.mercadolivre.com.br/${termo.replace(/\s+/g, '-')}" target="_blank">Mercado Livre</a></li>
+                        <li>Tente outros termos de busca</li>
+                        <li>Verifique se o servidor está online</li>
+                    </ul>
+                </div>
             </div>
         `;
     }
 
     function mostrarLoading() {
-        divResultados.innerHTML = '<div class="loading">Buscando produtos no Mercado Livre...</div>';
+        divResultados.innerHTML = `
+            <div class="loading-container">
+                <div class="loading-spinner"></div>
+                <p>Conectando com o Mercado Livre...</p>
+                <p class="loading-details">Buscando melhores preços para você</p>
+            </div>
+        `;
     }
 
-    console.log("Inicialização concluída. O sistema usará apenas links da API.");
+    console.log("Sistema inicializado com tratamento de erros melhorado");
 });
