@@ -4,7 +4,197 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Clima & CEP - Consulta Integrada</title>
-    <link rel="stylesheet" href="style.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(to right, #4a6cf7, #6a79f6);
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+        
+        header h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+        }
+        
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .consultas {
+            display: flex;
+            flex-wrap: wrap;
+            padding: 20px;
+            gap: 20px;
+        }
+        
+        .consulta-card {
+            flex: 1;
+            min-width: 300px;
+            background: #f9f9f9;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .consulta-card h2 {
+            margin-bottom: 15px;
+            color: #4a4a4a;
+            font-size: 1.4rem;
+        }
+        
+        .input-group {
+            display: flex;
+            margin-bottom: 15px;
+        }
+        
+        input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px 0 0 8px;
+            font-size: 16px;
+        }
+        
+        button {
+            background: linear-gradient(to right, #6e8efb, #a777e3);
+            color: white;
+            border: none;
+            border-radius: 0 8px 8px 0;
+            padding: 12px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        button:hover {
+            background: linear-gradient(to right, #5d7ce0, #9666d3);
+        }
+        
+        .resultado {
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid #6e8efb;
+            margin-top: 15px;
+            min-height: 100px;
+        }
+        
+        .integracao {
+            padding: 20px;
+            background: #f0f4ff;
+            border-radius: 10px;
+            margin: 20px;
+            text-align: center;
+        }
+        
+        .integracao h2 {
+            margin-bottom: 10px;
+            color: #4a4a4a;
+        }
+        
+        .integracao p {
+            margin-bottom: 15px;
+            color: #666;
+        }
+        
+        #btnIntegrar {
+            border-radius: 8px;
+            padding: 12px 25px;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            border-top: 1px solid #eee;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 15px;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #6e8efb;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error {
+            color: #e74c3c;
+            background-color: #fde8e6;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border-left: 4px solid #e74c3c;
+        }
+        
+        .weather-icon {
+            font-size: 3rem;
+            text-align: center;
+            margin: 10px 0;
+        }
+        
+        .address-line, .weather-line {
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+        
+        @media (max-width: 768px) {
+            .consultas {
+                flex-direction: column;
+            }
+            
+            .input-group {
+                flex-direction: column;
+            }
+            
+            input {
+                border-radius: 8px;
+                margin-bottom: 10px;
+            }
+            
+            button {
+                border-radius: 8px;
+                width: 100%;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -17,19 +207,43 @@
             <div class="consulta-card">
                 <h2>📍 Consulta de CEP</h2>
                 <div class="input-group">
-                    <input type="text" id="inputCep" placeholder="Digite o CEP (ex: 01001000)" maxlength="9">
+                    <input type="text" id="inputCep" placeholder="Digite o CEP (ex: 45200070)" value="45200070">
                     <button id="btnCep">Buscar Endereço</button>
                 </div>
-                <div id="resultadoCep" class="resultado"></div>
+                <div class="loading" id="loadingCep">
+                    <div class="spinner"></div>
+                    <p>Buscando endereço...</p>
+                </div>
+                <div id="resultadoCep" class="resultado">
+                    <div class="address-line"><strong>CEP:</strong> 45200-070</div>
+                    <div class="address-line"><strong>Logradouro:</strong> Avenida Presidente João Goulart</div>
+                    <div class="address-line"><strong>Bairro:</strong> Centro</div>
+                    <div class="address-line"><strong>Cidade:</strong> Jequié</div>
+                    <div class="address-line"><strong>Estado:</strong> BA</div>
+                </div>
             </div>
 
             <div class="consulta-card">
                 <h2>🌡️ Consulta de Clima</h2>
                 <div class="input-group">
-                    <input type="text" id="inputCidade" placeholder="Digite a cidade (ex: São Paulo)">
+                    <input type="text" id="inputCidade" placeholder="Digite a cidade (ex: Jequié)" value="Jequié">
                     <button id="btnClima">Buscar Clima</button>
                 </div>
-                <div id="resultadoClima" class="resultado"></div>
+                <div class="loading" id="loadingClima">
+                    <div class="spinner"></div>
+                    <p>Buscando informações meteorológicas...</p>
+                </div>
+                <div id="resultadoClima" class="resultado">
+                    <h3>Clima em Jequié</h3>
+                    <div class="weather-icon">☀️</div>
+                    <div class="weather-line"><strong>Temperatura:</strong> 28°C</div>
+                    <div class="weather-line"><strong>Condição:</strong> Ensolarado</div>
+                    <div class="weather-line"><strong>Umidade:</strong> 65%</div>
+                    <div class="weather-line"><strong>Vento:</strong> 10 km/h</div>
+                </div>
+                <div id="errorClima" class="error" style="display: none;">
+                    Erro ao buscar dados meteorológicos. Verifique o nome da cidade e tente novamente.
+                </div>
             </div>
         </div>
 
@@ -45,6 +259,168 @@
         </footer>
     </div>
 
-    <script src="script.js"></script>
+    <script>
+        // Elementos DOM
+        const inputCep = document.getElementById('inputCep');
+        const btnCep = document.getElementById('btnCep');
+        const loadingCep = document.getElementById('loadingCep');
+        const resultadoCep = document.getElementById('resultadoCep');
+        
+        const inputCidade = document.getElementById('inputCidade');
+        const btnClima = document.getElementById('btnClima');
+        const loadingClima = document.getElementById('loadingClima');
+        const resultadoClima = document.getElementById('resultadoClima');
+        const errorClima = document.getElementById('errorClima');
+        
+        const btnIntegrar = document.getElementById('btnIntegrar');
+        const resultadoIntegrado = document.getElementById('resultadoIntegrado');
+        
+        // Formatar CEP
+        function formatarCep(cep) {
+            cep = cep.replace(/\D/g, '');
+            if (cep.length > 5) {
+                cep = cep.substring(0, 5) + '-' + cep.substring(5, 8);
+            }
+            return cep;
+        }
+        
+        // Buscar CEP
+        async function buscarCep() {
+            const cep = inputCep.value.replace(/\D/g, '');
+            
+            if (cep.length !== 8) {
+                alert('Por favor, digite um CEP válido com 8 dígitos.');
+                return;
+            }
+            
+            loadingCep.style.display = 'block';
+            resultadoCep.style.display = 'none';
+            
+            try {
+                const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+                const data = await response.json();
+                
+                if (data.erro) {
+                    throw new Error('CEP não encontrado');
+                }
+                
+                resultadoCep.innerHTML = `
+                    <div class="address-line"><strong>CEP:</strong> ${formatarCep(data.cep)}</div>
+                    <div class="address-line"><strong>Logradouro:</strong> ${data.logradouro || 'Não informado'}</div>
+                    <div class="address-line"><strong>Bairro:</strong> ${data.bairro || 'Não informado'}</div>
+                    <div class="address-line"><strong>Cidade:</strong> ${data.localidade}</div>
+                    <div class="address-line"><strong>Estado:</strong> ${data.uf}</div>
+                `;
+                
+                resultadoCep.style.display = 'block';
+            } catch (error) {
+                resultadoCep.innerHTML = `<div class="error">Erro ao buscar CEP: ${error.message}</div>`;
+                resultadoCep.style.display = 'block';
+            } finally {
+                loadingCep.style.display = 'none';
+            }
+        }
+        
+        // Buscar Clima - FUNÇÃO QUE PRECISA DA CHAVE DE API
+        async function buscarClima() {
+            const cidade = inputCidade.value.trim();
+            
+            if (!cidade) {
+                alert('Por favor, digite o nome de uma cidade.');
+                return;
+            }
+            
+            loadingClima.style.display = 'block';
+            resultadoClima.style.display = 'none';
+            errorClima.style.display = 'none';
+            
+            try {
+                // SUBSTITUA SUA_CHAVE_API PELA SUA CHAVE REAL
+                const response = await fetch(`21baca5a7cf256a435dbab4505e1f4cd`);
+                
+                if (!response.ok) {
+                    throw new Error('Cidade não encontrada');
+                }
+                
+                const data = await response.json();
+                
+                // Determinar ícone com base nas condições
+                let icon = '🌤️';
+                const main = data.weather[0].main.toLowerCase();
+                if (main.includes('cloud')) icon = '☁️';
+                if (main.includes('rain')) icon = '🌧️';
+                if (main.includes('clear')) icon = '☀️';
+                if (main.includes('snow')) icon = '❄️';
+                
+                resultadoClima.innerHTML = `
+                    <h3>Clima em ${data.name}</h3>
+                    <div class="weather-icon">${icon}</div>
+                    <div class="weather-line"><strong>Temperatura:</strong> ${Math.round(data.main.temp)}°C</div>
+                    <div class="weather-line"><strong>Condição:</strong> ${data.weather[0].description}</div>
+                    <div class="weather-line"><strong>Umidade:</strong> ${data.main.humidity}%</div>
+                    <div class="weather-line"><strong>Vento:</strong> ${Math.round(data.wind.speed * 3.6)} km/h</div>
+                `;
+                
+                resultadoClima.style.display = 'block';
+            } catch (error) {
+                errorClima.style.display = 'block';
+            } finally {
+                loadingClima.style.display = 'none';
+            }
+        }
+        
+        // Integrar as duas buscas
+        async function integrarBusca() {
+            await buscarCep();
+            
+            // Extrair a cidade do resultado do CEP
+            const cidadeElement = resultadoCep.querySelector('.address-line:nth-child(4)');
+            if (cidadeElement) {
+                const cidade = cidadeElement.textContent.split(':')[1].trim();
+                inputCidade.value = cidade;
+                await buscarClima();
+                
+                // Mostrar resultado integrado
+                resultadoIntegrado.innerHTML = `
+                    <h3>Resultado Integrado</h3>
+                    <div style="display: flex; flex-wrap: wrap; gap: 20px;">
+                        <div style="flex: 1; min-width: 250px;">
+                            <h4>Endereço</h4>
+                            ${resultadoCep.innerHTML}
+                        </div>
+                        <div style="flex: 1; min-width: 250px;">
+                            <h4>Clima</h4>
+                            ${resultadoClima.innerHTML}
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        // Event Listeners
+        btnCep.addEventListener('click', buscarCep);
+        btnClima.addEventListener('click', buscarClima);
+        btnIntegrar.addEventListener('click', integrarBusca);
+        
+        // Permitir busca com Enter
+        inputCep.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') buscarCep();
+        });
+        
+        inputCidade.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') buscarClima();
+        });
+        
+        // Formatar CEP durante a digitação
+        inputCep.addEventListener('input', (e) => {
+            const startPos = e.target.selectionStart;
+            const endPos = e.target.selectionEnd;
+            
+            e.target.value = formatarCep(e.target.value);
+            
+            // Manter a posição do cursor
+            e.target.setSelectionRange(startPos, endPos);
+        });
+    </script>
 </body>
 </html>
