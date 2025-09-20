@@ -17,11 +17,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const btnCondicaoNovo = document.getElementById('filtroCondicaoNovo');
     const btnLimparFiltros = document.getElementById('limparFiltros');
 
-    // Verificar se os elementos foram encontrados
-    console.log("Elemento do botão de busca encontrado:", botaoDeBusca);
-    console.log("Elemento da caixa de busca encontrado:", caixaDeBusca);
-    console.log("Elemento de resultados encontrado:", divResultados);
-
     // --- Event Listeners ---
     botaoDeBusca.addEventListener('click', realizarBusca);
     caixaDeBusca.addEventListener('keypress', function(e) {
@@ -37,7 +32,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- Funções ---
     async function realizarBusca() {
-        console.log("O botão de busca foi clicado! A função realizarBusca() começou.");
         const termo = caixaDeBusca.value.trim();
         
         if (termo === '') {
@@ -68,14 +62,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw new Error(resultados.error);
             }
             
-            resultadosOriginais = resultados;
+            // Garantir que os links sejam válidos
+            const resultadosComLinksValidos = resultados.map(produto => {
+                return {
+                    ...produto,
+                    link: produto.link && produto.link.includes('mercadolivre') 
+                        ? produto.link 
+                        : `https://www.mercadolivre.com.br/${produto.id}`
+                };
+            });
+            
+            resultadosOriginais = resultadosComLinksValidos;
             exibirResultados(resultadosOriginais, false);
             divFiltros.style.display = 'flex';
 
         } catch (error) {
             console.error('Falha na busca:', error);
             
-            // Fallback: dados mockados para demonstração
+            // Fallback: dados mockados com links de busca reais
             const dadosMockados = criarDadosMockados(termo);
             
             resultadosOriginais = dadosMockados;
@@ -150,14 +154,13 @@ document.addEventListener('DOMContentLoaded', function() {
             aviso.innerHTML = `
                 <p>🔍 <strong>Modo de demonstração:</strong> Mostrando dados simulados.</p>
                 <p>A API do Mercado Livre está com restrições de acesso temporárias.</p>
-                <p>Os preços e produtos são exemplos representativos.</p>
+                <p>Os links apontam para buscas reais no Mercado Livre.</p>
             `;
             divResultados.appendChild(aviso);
         }
     }
 
     function mostrarLoading() {
-        const divResultados = document.getElementById('resultados');
         divResultados.innerHTML = '<div class="loading">Buscando produtos no Mercado Livre...</div>';
     }
 
@@ -219,6 +222,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const cidades = ['São Paulo, SP', 'Rio de Janeiro, RJ', 'Belo Horizonte, MG', 
                         'Porto Alegre, RS', 'Brasília, DF', 'Salvador, BA'];
 
+        // Link de busca real no Mercado Livre
+        const linkBuscaReal = `https://www.mercadolivre.com.br/${termo.replace(/\s+/g, '-')}`;
+
         return produtosDaCategoria.map((nomeProduto, index) => {
             const precoBase = 500 + (index * 300);
             const precoVariacao = Math.floor(Math.random() * 400);
@@ -229,7 +235,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 nome: `${termo} ${nomeProduto}`,
                 preco: precoBase + precoVariacao,
                 imagem: `https://via.placeholder.com/300x200/2d3277/ffffff?text=${encodeURIComponent(nomeProduto.split(' ')[0])}`,
-                link: `https://www.mercadolivre.com.br`,
+                link: linkBuscaReal, // Usando link de busca real
                 condicao: Math.random() > 0.3 ? 'Novo' : 'Usado',
                 vendidos: vendidos,
                 seller: vendedores[Math.floor(Math.random() * vendedores.length)],
