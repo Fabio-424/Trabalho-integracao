@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Elementos do DOM
+   
     const inputCep = document.getElementById('inputCep');
     const btnCep = document.getElementById('btnCep');
     const resultadoCep = document.getElementById('resultadoCep');
@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const btnIntegrar = document.getElementById('btnIntegrar');
     const resultadoIntegrado = document.getElementById('resultadoIntegrado');
 
-    // Formatador de CEP
+  
     inputCep.addEventListener('input', function(e) {
         let value = e.target.value.replace(/\D/g, '');
         if (value.length > 5) {
@@ -20,19 +20,19 @@ document.addEventListener('DOMContentLoaded', function() {
         e.target.value = value.substring(0, 9);
     });
 
-    // Consulta de CEP
+  
     btnCep.addEventListener('click', consultarCep);
     inputCep.addEventListener('keypress', function(e) {
         if (e.key === 'Enter') consultarCep();
     });
 
-    // Consulta de Clima
+   
     btnClima.addEventListener('click', consultarClima);
     inputCidade.addEventListener('keypress', function(e) {
         if (e.key === 'Enter') consultarClima();
     });
 
-    // Integração das duas APIs
+
     btnIntegrar.addEventListener('click', integrarApis);
 
     async function consultarCep() {
@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             `;
             
-            // Preenche automaticamente o campo de cidade para integração
+            
             inputCidade.value = data.cidade;
             
         } catch (error) {
@@ -116,7 +116,7 @@ document.addEventListener('DOMContentLoaded', function() {
         resultadoIntegrado.innerHTML = '<div class="loading">Integrando APIs... Buscando CEP e depois clima.</div>';
         
         try {
-            // Primeiro busca o CEP
+           
             const responseCep = await fetch(`/api/cep?cep=${cep}`);
             const dataCep = await responseCep.json();
             
@@ -124,7 +124,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw new Error(dataCep.error || 'Erro ao buscar CEP');
             }
             
-            // Depois busca o clima baseado na cidade do CEP
+            
             const responseClima = await fetch(`/api/clima?cidade=${encodeURIComponent(dataCep.cidade)}`);
             const dataClima = await responseClima.json();
             
