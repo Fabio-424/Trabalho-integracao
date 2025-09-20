@@ -1,187 +1,157 @@
-// --- Variáveis Globais ---
-let resultadosOriginais = [];
-
-// --- Inicialização quando a página carrega ---
 document.addEventListener('DOMContentLoaded', function() {
-    console.log("Página carregada. Inicializando...");
+    // Elementos do DOM
+    const inputCep = document.getElementById('inputCep');
+    const btnCep = document.getElementById('btnCep');
+    const resultadoCep = document.getElementById('resultadoCep');
     
-    // --- Elementos da DOM ---
-    const botaoDeBusca = document.getElementById('botaoDeBusca');
-    const caixaDeBusca = document.getElementById('caixaDeBusca');
-    const divFiltros = document.getElementById('filtros');
-    const divResultados = document.getElementById('resultados');
+    const inputCidade = document.getElementById('inputCidade');
+    const btnClima = document.getElementById('btnClima');
+    const resultadoClima = document.getElementById('resultadoClima');
     
-    // --- Botões de Filtro ---
-    const btnMenorPreco = document.getElementById('filtroMenorPreco');
-    const btnMaiorPreco = document.getElementById('filtroMaiorPreco');
-    const btnCondicaoNovo = document.getElementById('filtroCondicaoNovo');
-    const btnLimparFiltros = document.getElementById('limparFiltros');
+    const btnIntegrar = document.getElementById('btnIntegrar');
+    const resultadoIntegrado = document.getElementById('resultadoIntegrado');
 
-    // --- Event Listeners ---
-    botaoDeBusca.addEventListener('click', realizarBusca);
-    caixaDeBusca.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            realizarBusca();
+    // Formatador de CEP
+    inputCep.addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length > 5) {
+            value = value.replace(/^(\d{5})(\d)/, '$1-$2');
         }
+        e.target.value = value.substring(0, 9);
     });
-    
-    btnMenorPreco.addEventListener('click', () => aplicarFiltro('menorPreco'));
-    btnMaiorPreco.addEventListener('click', () => aplicarFiltro('maiorPreco'));
-    btnCondicaoNovo.addEventListener('click', () => aplicarFiltro('condicaoNovo'));
-    btnLimparFiltros.addEventListener('click', () => aplicarFiltro('limpar'));
 
-    // --- Funções ---
-    async function realizarBusca() {
-        const termo = caixaDeBusca.value.trim();
+    // Consulta de CEP
+    btnCep.addEventListener('click', consultarCep);
+    inputCep.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') consultarCep();
+    });
+
+    // Consulta de Clima
+    btnClima.addEventListener('click', consultarClima);
+    inputCidade.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') consultarClima();
+    });
+
+    // Integração das duas APIs
+    btnIntegrar.addEventListener('click', integrarApis);
+
+    async function consultarCep() {
+        const cep = inputCep.value.replace(/\D/g, '');
         
-        if (termo === '') {
-            alert('Por favor, digite algo para buscar.');
+        if (cep.length !== 8) {
+            resultadoCep.innerHTML = '<div class="erro">⚠️ Digite um CEP válido com 8 dígitos</div>';
             return;
         }
 
-        mostrarLoading();
-        divFiltros.style.display = 'none';
-
+        resultadoCep.innerHTML = '<div class="loading">Buscando endereço...</div>';
+        
         try {
-            const apiUrl = `/api/buscar?termo=${encodeURIComponent(termo)}`;
-            console.log("Buscando:", apiUrl);
-            
-            const response = await fetch(apiUrl);
+            const response = await fetch(`/api/cep?cep=${cep}`);
             const data = await response.json();
             
-            console.log("Resposta da API:", data);
-
             if (!response.ok) {
-                throw new Error(`Erro ${response.status}: ${response.statusText}`);
+                throw new Error(data.error || 'Erro ao buscar CEP');
             }
-
-            if (data.success) {
-                // API funcionou - mostrar resultados
-                resultadosOriginais = data.resultados;
-                exibirResultados(resultadosOriginais);
-                divFiltros.style.display = 'flex';
-                
-                // Mostrar estatísticas
-                divResultados.innerHTML += `
-                    <div class="sucesso">
-                        <p>✅ Encontrados ${data.total} resultados para "${termo}"</p>
-                    </div>
-                `;
-                
-            } else {
-                // API não está disponível
-                exibirErroAPI(data, termo);
-            }
-
+            
+            resultadoCep.innerHTML = `
+                <div class="sucesso">
+                    <h3>📍 Endereço Encontrado</h3>
+                    <p><strong>CEP:</strong> ${data.cep}</p>
+                    <p><strong>Logradouro:</strong> ${data.logradouro || 'Não informado'}</p>
+                    <p><strong>Bairro:</strong> ${data.bairro || 'Não informado'}</p>
+                    <p><strong>Cidade:</strong> ${data.cidade}</p>
+                    <p><strong>Estado:</strong> ${data.estado}</p>
+                </div>
+            `;
+            
+            // Preenche automaticamente o campo de cidade para integração
+            inputCidade.value = data.cidade;
+            
         } catch (error) {
-            console.error('Erro completo:', error);
-            exibirErroConexao(error, termo);
+            resultadoCep.innerHTML = `<div class="erro">❌ ${error.message}</div>`;
         }
     }
 
-    function aplicarFiltro(tipo) {
-        let resultadosFiltrados = [...resultadosOriginais]; 
-
-        if (tipo === 'menorPreco') {
-            resultadosFiltrados.sort((a, b) => a.preco - b.preco);
-        } 
-        else if (tipo === 'maiorPreco') {
-            resultadosFiltrados.sort((a, b) => b.preco - a.preco);
-        }
-        else if (tipo === 'condicaoNovo') {
-            resultadosFiltrados = resultadosFiltrados.filter(item => item.condicao === 'Novo');
-        }
-        else if (tipo === 'limpar') {
-            resultadosFiltrados = [...resultadosOriginais];
-        }
-
-        exibirResultados(resultadosFiltrados);
-    }
-
-    function exibirResultados(resultados) {
-        divResultados.innerHTML = '';
-
-        if (resultados.length === 0) {
-            divResultados.innerHTML = '<p>Nenhum resultado encontrado para sua busca.</p>';
+    async function consultarClima() {
+        const cidade = inputCidade.value.trim();
+        
+        if (!cidade) {
+            resultadoClima.innerHTML = '<div class="erro">⚠️ Digite o nome de uma cidade</div>';
             return;
         }
 
-        resultados.forEach(produto => {
-            const cardProduto = document.createElement('a');
-            cardProduto.href = produto.link;
-            cardProduto.target = '_blank';
-            cardProduto.className = 'card-produto';
-            cardProduto.rel = 'noopener noreferrer';
-
-            cardProduto.innerHTML = `
-                <img src="${produto.imagem}" alt="${produto.nome}" class="imagem-produto"
-                     onerror="this.src='https://via.placeholder.com/300x200/2d3277/ffffff?text=Imagem'">
-                <div class="info-produto">
-                    <h3>${produto.nome}</h3>
-                    <p class="preco-produto">R$ ${produto.preco.toFixed(2)}</p>
-                    <div class="detalhes-produto">
-                        <span class="condicao-produto">${produto.condicao}</span>
-                        ${produto.vendidos > 0 ? `<span class="vendidos-produto">${produto.vendidos} vendidos</span>` : ''}
-                        ${produto.shipping ? `<span class="frete-gratis">🚚 Frete Grátis</span>` : ''}
-                    </div>
-                    <p class="vendedor-produto">${produto.seller}</p>
-                    ${produto.local ? `<p class="local-produto">📍 ${produto.local}</p>` : ''}
-                    <p class="fonte-produto">Ver no Mercado Livre →</p>
+        resultadoClima.innerHTML = '<div class="loading">Buscando previsão do tempo...</div>';
+        
+        try {
+            const response = await fetch(`/api/clima?cidade=${encodeURIComponent(cidade)}`);
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(data.error || 'Erro ao buscar clima');
+            }
+            
+            resultadoClima.innerHTML = `
+                <div class="sucesso">
+                    <h3>🌤️ Clima em ${data.cidade}</h3>
+                    <p><strong>Temperatura:</strong> ${data.temperatura}°C</p>
+                    <p><strong>Condição:</strong> ${data.descricao}</p>
+                    <p><strong>Umidade:</strong> ${data.umidade}%</p>
+                    <p><strong>Vento:</strong> ${data.vento} m/s</p>
                 </div>
             `;
-            divResultados.appendChild(cardProduto);
-        });
+            
+        } catch (error) {
+            resultadoClima.innerHTML = `<div class="erro">❌ ${error.message}</div>`;
+        }
     }
 
-    function exibirErroAPI(data, termo) {
-        divResultados.innerHTML = `
-            <div class="erro">
-                <h3>⚠️ API Indisponível no Momento</h3>
-                <p>A conexão com o Mercado Livre está temporariamente indisponível.</p>
-                <p><strong>Detalhes técnicos:</strong> ${data.error || 'Erro desconhecido'}</p>
-                
-                <div class="solucao">
-                    <h4>📋 Soluções:</h4>
-                    <ul>
-                        <li>Tente novamente em alguns minutos</li>
-                        <li>Verifique sua conexão com a internet</li>
-                        <li>Busque diretamente no <a href="${data.searchUrl || 'https://www.mercadolivre.com.br'}" target="_blank">Mercado Livre</a></li>
-                    </ul>
+    async function integrarApis() {
+        const cep = inputCep.value.replace(/\D/g, '');
+        
+        if (cep.length !== 8) {
+            resultadoIntegrado.innerHTML = '<div class="erro">⚠️ Digite um CEP válido primeiro</div>';
+            return;
+        }
+
+        resultadoIntegrado.innerHTML = '<div class="loading">Integrando APIs... Buscando CEP e depois clima.</div>';
+        
+        try {
+            // Primeiro busca o CEP
+            const responseCep = await fetch(`/api/cep?cep=${cep}`);
+            const dataCep = await responseCep.json();
+            
+            if (!responseCep.ok) {
+                throw new Error(dataCep.error || 'Erro ao buscar CEP');
+            }
+            
+            // Depois busca o clima baseado na cidade do CEP
+            const responseClima = await fetch(`/api/clima?cidade=${encodeURIComponent(dataCep.cidade)}`);
+            const dataClima = await responseClima.json();
+            
+            if (!responseClima.ok) {
+                throw new Error(dataClima.error || 'Erro ao buscar clima');
+            }
+            
+            resultadoIntegrado.innerHTML = `
+                <div class="sucesso">
+                    <h3>🔄 Integração Concluída</h3>
+                    
+                    <div class="info-cep">
+                        <h4>📍 Dados do CEP ${dataCep.cep}:</h4>
+                        <p>${dataCep.logradouro || ''} ${dataCep.bairro || ''}</p>
+                        <p>${dataCep.cidade} - ${dataCep.estado}</p>
+                    </div>
+                    
+                    <div class="info-clima">
+                        <h4>🌤️ Clima em ${dataClima.cidade}:</h4>
+                        <p><strong>${dataClima.temperatura}°C</strong> - ${dataClima.descricao}</p>
+                        <p>Umidade: ${dataClima.umidade}% | Vento: ${dataClima.vento} m/s</p>
+                    </div>
                 </div>
-                
-                <p class="timestamp">⌚ ${new Date().toLocaleString()}</p>
-            </div>
-        `;
+            `;
+            
+        } catch (error) {
+            resultadoIntegrado.innerHTML = `<div class="erro">❌ Erro na integração: ${error.message}</div>`;
+        }
     }
-
-    function exibirErroConexao(error, termo) {
-        divResultados.innerHTML = `
-            <div class="erro">
-                <h3>❌ Erro de Conexão</h3>
-                <p>Não foi possível conectar ao servidor de busca.</p>
-                <p><strong>Erro:</strong> ${error.message}</p>
-                
-                <div class="solucao">
-                    <h4>🚀 Alternativas:</h4>
-                    <ul>
-                        <li>Busque diretamente no <a href="https://lista.mercadolivre.com.br/${termo.replace(/\s+/g, '-')}" target="_blank">Mercado Livre</a></li>
-                        <li>Tente outros termos de busca</li>
-                        <li>Verifique se o servidor está online</li>
-                    </ul>
-                </div>
-            </div>
-        `;
-    }
-
-    function mostrarLoading() {
-        divResultados.innerHTML = `
-            <div class="loading-container">
-                <div class="loading-spinner"></div>
-                <p>Conectando com o Mercado Livre...</p>
-                <p class="loading-details">Buscando melhores preços para você</p>
-            </div>
-        `;
-    }
-
-    console.log("Sistema inicializado com tratamento de erros melhorado");
 });
