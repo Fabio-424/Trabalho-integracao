@@ -1,50 +1,34 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clima & CEP - Consulta Integrada</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CEP + Clima Integrado</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>🌤️ Clima & CEP</h1>
-            <p>Consulte endereços e previsão do tempo integrados</p>
-        </header>
+  <div class="container">
+    <header>
+      <h1>🌤️ CEP + Clima</h1>
+      <p>Descubra o endereço e a previsão do tempo digitando apenas o CEP</p>
+    </header>
 
-        <div class="consultas">
-            <div class="consulta-card">
-                <h2>📍 Consulta de CEP</h2>
-                <div class="input-group">
-                    <input type="text" id="inputCep" placeholder="Digite o CEP (ex: 01001000)" maxlength="9">
-                    <button id="btnCep">Buscar Endereço</button>
-                </div>
-                <div id="resultadoCep" class="resultado"></div>
-            </div>
-
-            <div class="consulta-card">
-                <h2>🌡️ Consulta de Clima</h2>
-                <div class="input-group">
-                    <input type="text" id="inputCidade" placeholder="Digite a cidade (ex: São Paulo)">
-                    <button id="btnClima">Buscar Clima</button>
-                </div>
-                <div id="resultadoClima" class="resultado"></div>
-            </div>
+    <main>
+      <div class="consulta-card">
+        <h2>🔎 Consulta Integrada</h2>
+        <div class="input-group">
+          <input type="text" id="inputCep" placeholder="Digite o CEP (ex: 01001000)" maxlength="9">
+          <button id="btnCep">Buscar</button>
         </div>
+        <div id="resultado" class="resultado"></div>
+      </div>
+    </main>
 
-        <div class="integracao">
-            <h2>🔄 Integração CEP + Clima</h2>
-            <p>Busque o CEP e depois o clima da cidade automaticamente!</p>
-            <button id="btnIntegrar">Buscar CEP e depois Clima</button>
-            <div id="resultadoIntegrado" class="resultado"></div>
-        </div>
+    <footer>
+      <p>Integração de APIs - ViaCEP & OpenWeatherMap © 2025</p>
+    </footer>
+  </div>
 
-        <footer>
-            <p>Integração de APIs - ViaCEP & OpenWeatherMap © 2023</p>
-        </footer>
-    </div>
-
-    <script src="script.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>

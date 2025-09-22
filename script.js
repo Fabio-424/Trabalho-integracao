@@ -1,157 +1,61 @@
 document.addEventListener('DOMContentLoaded', function() {
-   
-    const inputCep = document.getElementById('inputCep');
-    const btnCep = document.getElementById('btnCep');
-    const resultadoCep = document.getElementById('resultadoCep');
+  const inputCep = document.getElementById('inputCep');
+  const btnCep = document.getElementById('btnCep');
+  const resultado = document.getElementById('resultado');
+
+  //formatando o cep
+  inputCep.addEventListener('input', function(e) {
+    let value = e.target.value.replace(/\D/g, '');
+    if (value.length > 5) {
+      value = value.replace(/^(\d{5})(\d)/, '$1-$2');
+    }
+    e.target.value = value.substring(0, 9);
+  });
+
+  btnCep.addEventListener('click', consultarCep);
+  inputCep.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') consultarCep();
+  });
+
+  async function consultarCep() {
+    const cep = inputCep.value.replace(/\D/g, '');
     
-    const inputCidade = document.getElementById('inputCidade');
-    const btnClima = document.getElementById('btnClima');
-    const resultadoClima = document.getElementById('resultadoClima');
-    
-    const btnIntegrar = document.getElementById('btnIntegrar');
-    const resultadoIntegrado = document.getElementById('resultadoIntegrado');
-
-  
-    inputCep.addEventListener('input', function(e) {
-        let value = e.target.value.replace(/\D/g, '');
-        if (value.length > 5) {
-            value = value.replace(/^(\d{5})(\d)/, '$1-$2');
-        }
-        e.target.value = value.substring(0, 9);
-    });
-
-  
-    btnCep.addEventListener('click', consultarCep);
-    inputCep.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') consultarCep();
-    });
-
-   
-    btnClima.addEventListener('click', consultarClima);
-    inputCidade.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') consultarClima();
-    });
-
-
-    btnIntegrar.addEventListener('click', integrarApis);
-
-    async function consultarCep() {
-        const cep = inputCep.value.replace(/\D/g, '');
-        
-        if (cep.length !== 8) {
-            resultadoCep.innerHTML = '<div class="erro">⚠️ Digite um CEP válido com 8 dígitos</div>';
-            return;
-        }
-
-        resultadoCep.innerHTML = '<div class="loading">Buscando endereço...</div>';
-        
-        try {
-            const response = await fetch(`/api/cep?cep=${cep}`);
-            const data = await response.json();
-            
-            if (!response.ok) {
-                throw new Error(data.error || 'Erro ao buscar CEP');
-            }
-            
-            resultadoCep.innerHTML = `
-                <div class="sucesso">
-                    <h3>📍 Endereço Encontrado</h3>
-                    <p><strong>CEP:</strong> ${data.cep}</p>
-                    <p><strong>Logradouro:</strong> ${data.logradouro || 'Não informado'}</p>
-                    <p><strong>Bairro:</strong> ${data.bairro || 'Não informado'}</p>
-                    <p><strong>Cidade:</strong> ${data.cidade}</p>
-                    <p><strong>Estado:</strong> ${data.estado}</p>
-                </div>
-            `;
-            
-            
-            inputCidade.value = data.cidade;
-            
-        } catch (error) {
-            resultadoCep.innerHTML = `<div class="erro">❌ ${error.message}</div>`;
-        }
+    if (cep.length !== 8) {
+      resultado.innerHTML = '<div class="erro">Digite um CEP válido com 8 dígitos</div>';
+      return;
     }
 
-    async function consultarClima() {
-        const cidade = inputCidade.value.trim();
-        
-        if (!cidade) {
-            resultadoClima.innerHTML = '<div class="erro">⚠️ Digite o nome de uma cidade</div>';
-            return;
-        }
+    resultado.innerHTML = '<div class="loading">Buscando dados...</div>';
 
-        resultadoClima.innerHTML = '<div class="loading">Buscando previsão do tempo...</div>';
-        
-        try {
-            const response = await fetch(`/api/clima?cidade=${encodeURIComponent(cidade)}`);
-            const data = await response.json();
-            
-            if (!response.ok) {
-                throw new Error(data.error || 'Erro ao buscar clima');
-            }
-            
-            resultadoClima.innerHTML = `
-                <div class="sucesso">
-                    <h3>🌤️ Clima em ${data.cidade}</h3>
-                    <p><strong>Temperatura:</strong> ${data.temperatura}°C</p>
-                    <p><strong>Condição:</strong> ${data.descricao}</p>
-                    <p><strong>Umidade:</strong> ${data.umidade}%</p>
-                    <p><strong>Vento:</strong> ${data.vento} m/s</p>
-                </div>
-            `;
-            
-        } catch (error) {
-            resultadoClima.innerHTML = `<div class="erro">❌ ${error.message}</div>`;
-        }
+    try {
+      const response = await fetch(`/api/cep_clima_integracao?cep=${cep}`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Erro ao buscar dados");
+      }
+
+      resultado.innerHTML = `
+        <div class="card">
+          <h2>📍 Endereço</h2>
+          <p><strong>CEP:</strong> ${data.cep}</p>
+          <p><strong>Logradouro:</strong> ${data.logradouro || "Não informado"}</p>
+          <p><strong>Bairro:</strong> ${data.bairro || "Não informado"}</p>
+          <p><strong>Cidade:</strong> ${data.cidade} - ${data.estado}</p>
+
+          <h2>🌤️ Clima</h2>
+          <div class="clima">
+            <img src="https://openweathermap.org/img/wn/${data.clima.icone}@2x.png" alt="icone clima"/>
+            <div>
+              <p><strong>${data.clima.temperatura}°C</strong> - ${data.clima.descricao}</p>
+              <p>Umidade: ${data.clima.umidade}%</p>
+              <p>Vento: ${data.clima.vento} m/s</p>
+            </div>
+          </div>
+        </div>
+      `;
+    } catch (error) {
+      resultado.innerHTML = `<div class="erro">${error.message}</div>`;
     }
-
-    async function integrarApis() {
-        const cep = inputCep.value.replace(/\D/g, '');
-        
-        if (cep.length !== 8) {
-            resultadoIntegrado.innerHTML = '<div class="erro">⚠️ Digite um CEP válido primeiro</div>';
-            return;
-        }
-
-        resultadoIntegrado.innerHTML = '<div class="loading">Integrando APIs... Buscando CEP e depois clima.</div>';
-        
-        try {
-           
-            const responseCep = await fetch(`/api/cep?cep=${cep}`);
-            const dataCep = await responseCep.json();
-            
-            if (!responseCep.ok) {
-                throw new Error(dataCep.error || 'Erro ao buscar CEP');
-            }
-            
-            
-            const responseClima = await fetch(`/api/clima?cidade=${encodeURIComponent(dataCep.cidade)}`);
-            const dataClima = await responseClima.json();
-            
-            if (!responseClima.ok) {
-                throw new Error(dataClima.error || 'Erro ao buscar clima');
-            }
-            
-            resultadoIntegrado.innerHTML = `
-                <div class="sucesso">
-                    <h3>🔄 Integração Concluída</h3>
-                    
-                    <div class="info-cep">
-                        <h4>📍 Dados do CEP ${dataCep.cep}:</h4>
-                        <p>${dataCep.logradouro || ''} ${dataCep.bairro || ''}</p>
-                        <p>${dataCep.cidade} - ${dataCep.estado}</p>
-                    </div>
-                    
-                    <div class="info-clima">
-                        <h4>🌤️ Clima em ${dataClima.cidade}:</h4>
-                        <p><strong>${dataClima.temperatura}°C</strong> - ${dataClima.descricao}</p>
-                        <p>Umidade: ${dataClima.umidade}% | Vento: ${dataClima.vento} m/s</p>
-                    </div>
-                </div>
-            `;
-            
-        } catch (error) {
-            resultadoIntegrado.innerHTML = `<div class="erro">❌ Erro na integração: ${error.message}</div>`;
-        }
-    }
+  }
 });
