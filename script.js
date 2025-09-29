@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const btnCep = document.getElementById('btnCep');
   const resultado = document.getElementById('resultado');
 
-  //formatando o cep
+  // formatar o cep
   inputCep.addEventListener('input', function(e) {
     let value = e.target.value.replace(/\D/g, '');
     if (value.length > 5) {
@@ -12,11 +12,15 @@ document.addEventListener('DOMContentLoaded', function() {
     e.target.value = value.substring(0, 9);
   });
 
+  //click
   btnCep.addEventListener('click', consultarCep);
+
+  //enter
   inputCep.addEventListener('keypress', function(e) {
     if (e.key === 'Enter') consultarCep();
   });
 
+  // função da consulta
   async function consultarCep() {
     const cep = inputCep.value.replace(/\D/g, '');
     
@@ -42,7 +46,9 @@ document.addEventListener('DOMContentLoaded', function() {
           <p><strong>Logradouro:</strong> ${data.logradouro || "Não informado"}</p>
           <p><strong>Bairro:</strong> ${data.bairro || "Não informado"}</p>
           <p><strong>Cidade:</strong> ${data.cidade} - ${data.estado}</p>
-
+          <p><strong>DDD:</strong> ${data.ddd || "Não disponível"}</p>
+          ${data.ddd_info ? `<p><strong>Estado do DDD:</strong> ${data.ddd_info.estado}</p>` : ""}
+          
           <h2>🌤️ Clima</h2>
           <div class="clima">
             <img src="https://openweathermap.org/img/wn/${data.clima.icone}@2x.png" alt="icone clima"/>

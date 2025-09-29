@@ -13,7 +13,7 @@ export default async function handler(request, response) {
   }
 
   try {
-    // --- 1. Buscar endereço ---
+    // busca o endereço no viacep
     const apiUrlCep = `https://viacep.com.br/ws/${cep}/json/`;
     const apiResponseCep = await fetch(apiUrlCep);
 
@@ -27,8 +27,8 @@ export default async function handler(request, response) {
       throw new Error('CEP não encontrado');
     }
 
-    // --- 2. Buscar clima da cidade ---
-    const apiKey = "a7316fab206ebe1f315ca75436b3579f"; // sua chave
+    // busca o clima da cidade na openweather
+    const apiKey = "a7316fab206ebe1f315ca75436b3579f";
     const apiUrlClima = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(dataCep.localidade)}&appid=${apiKey}&units=metric&lang=pt_br`;
     
     const apiResponseClima = await fetch(apiUrlClima);
@@ -38,13 +38,27 @@ export default async function handler(request, response) {
 
     const dataClima = await apiResponseClima.json();
 
-    // --- 3. Retorno combinado ---
+    // busca o ddd na brasilapi
+    let dataDDD = null;
+    if (dataCep.ddd) {
+      const apiUrlDDD = `https://brasilapi.com.br/api/ddd/v1/${dataCep.ddd}`;
+      const apiResponseDDD = await fetch(apiUrlDDD);
+
+      if (apiResponseDDD.ok) {
+        const jsonDDD = await apiResponseDDD.json();
+        dataDDD = { estado: jsonDDD.state }; // só retorna o estado
+      }
+    }
+
+    // retorno da integração
     response.status(200).json({
       cep: dataCep.cep,
       logradouro: dataCep.logradouro,
       bairro: dataCep.bairro,
       cidade: dataCep.localidade,
       estado: dataCep.uf,
+      ddd: dataCep.ddd || null,
+      ddd_info: dataDDD,
       clima: {
         temperatura: Math.round(dataClima.main.temp),
         descricao: dataClima.weather[0].description,
